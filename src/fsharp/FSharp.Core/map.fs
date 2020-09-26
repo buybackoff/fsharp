@@ -138,14 +138,18 @@ module MapTree =
         match m with 
         | MapEmpty -> false
         | MapOne (k2, v2) -> 
-            let c = comparer.Compare(k, k2) 
-            if c = 0 then v <- v2; true
+//            let c = comparer.Compare(k, k2) 
+            if LanguagePrimitives.GenericEquality k k2 then v <- v2; true
             else false
-        | MapNode (k2, v2, l, r, _) -> 
-            let c = comparer.Compare(k, k2) 
-            if c < 0 then tryGetValue comparer k &v l
-            elif c = 0 then v <- v2; true
-            else tryGetValue comparer k &v r
+        | MapNode (k2, v2, l, r, _) ->
+            if LanguagePrimitives.GenericLessThan k k2 then tryGetValue comparer k &v l
+            elif LanguagePrimitives.GenericLessThan k2 k then tryGetValue comparer k &v r
+            else v <- v2; true
+//            else
+//                let c = comparer.Compare(k, k2) 
+//                if c < 0 then tryGetValue comparer k &v l
+//                elif c = 0 then v <- v2; true
+//                else tryGetValue comparer k &v r
 
     let find (comparer: IComparer<'Key>) k (m: MapTree<'Key, 'Value>) =
         let mutable v = Unchecked.defaultof<'Value>
