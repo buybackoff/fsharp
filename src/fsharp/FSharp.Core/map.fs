@@ -81,16 +81,14 @@ module MapTree =
 #endif
 
     let inline height (m: MapTree<'Key, 'Value>) = 
-        if isEmpty m then 0
-        else
-            match m with
-            | :? MapTreeNode<'Key, 'Value> as mn -> mn.Height
-            | _ -> 1
+        match m with
+        | :? MapTreeNode<'Key, 'Value> as mn -> mn.Height
+        | _ -> 1 - (# "ceq" m null : int #) // 1 branch less
     
     let mk l k v r : MapTree<'Key, 'Value> = 
         let hl = height l
         let hr = height r
-        let m = max hl hr
+        let m = if hl > hr then hl else hr
         if m = 0 then // m=0 ~ isEmpty l && isEmpty r 
             MapTree(k,v)
         else
@@ -101,8 +99,9 @@ module MapTree =
         
     let rebalance t1 (k: 'Key) (v: 'Value) t2 : MapTree<'Key, 'Value> =
         let t1h = height t1
-        let t2h = height t2 
-        if  t2h > t1h + 2 then (* right is heavier than left *)
+        let t2h = height t2
+        let hdiff = t1h - t2h
+        if  hdiff < -2 then (* right is heavier than left *)
             let t2' = asNode(t2)
             (* one of the nodes must have height > height t1 + 1 *)
             if height t2'.Left > t1h + 1 then  (* balance left: combination *)
@@ -111,7 +110,7 @@ module MapTree =
             else (* rotate left *)
                 mk (mk t1 k v t2'.Left) t2'.Key t2'.Value t2'.Right
         else
-            if  t1h > t2h + 2 then (* left is heavier than right *)
+            if  hdiff > 2 then (* left is heavier than right *)
                 let t1' = asNode(t1)
                 (* one of the nodes must have height > height t2 + 1 *)
                 if height t1'.Right > t2h + 1 then 
